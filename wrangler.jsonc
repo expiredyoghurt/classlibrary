@@ -9,7 +9,7 @@
     "not_found_handling": "none"
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "class-library", "database_id": "REPLACE_WITH_YOUR_D1_ID", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "class-library", "database_id": "bac6f7be-61f2-4305-ba0f-5b88bee06c47", "migrations_dir": "migrations" }
   ],
   "r2_buckets": [
     { "binding": "COVERS", "bucket_name": "class-library-covers" }
