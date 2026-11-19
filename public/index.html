@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#1f3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<title>Class Library</title>
+<style>
+:root{--bg:#f6f3ec;--ink:#1d2433;--quiet:#5c6578;--card:#fff;--line:#d9d4c7;--brand:#1f3a5f;--good:#2e7d4f;--warn:#b26a00;--bad:#b3392f;--tap:72px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:20px/1.3 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+#app{height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--brand);color:#fff;min-height:56px}
+header h1{font-size:22px;margin:0;font-weight:650}
+.badge{font-size:15px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.18)}
+.badge.warn{background:var(--warn)}
+.badge.off{background:var(--bad)}
+main{flex:1;min-height:0;display:flex;flex-direction:column;padding:16px;gap:14px}
+.screen{display:none;flex:1;min-height:0;flex-direction:column;gap:14px}
+.screen.on{display:flex}
+button{font:inherit;font-weight:650;border:0;border-radius:16px;min-height:var(--tap);padding:12px 20px;background:var(--brand);color:#fff;cursor:pointer}
+button.ghost{background:var(--card);color:var(--ink);border:2px solid var(--line)}
+button.good{background:var(--good)}
+button.bad{background:var(--bad)}
+button:active{filter:brightness(.9)}
+button[disabled]{opacity:.4}
+.row{display:flex;gap:12px}
+.row>*{flex:1}
+.scanbox{position:relative;flex:1;min-height:200px;background:#000;border-radius:20px;overflow:hidden}
+video{width:100%;height:100%;object-fit:cover}
+.aim{position:absolute;left:12%;right:12%;top:32%;bottom:32%;border:4px solid rgba(255,255,255,.9);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.hint{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:#fff;font-weight:650;text-shadow:0 1px 4px #000}
+.title{font-size:28px;font-weight:700;margin:0}
+.sub{color:var(--quiet);margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;overflow:auto;padding-bottom:8px}
+.grid button{min-height:84px;font-size:22px;background:var(--card);color:var(--ink);border:2px solid var(--line)}
+.grid.emoji button{font-size:54px;min-height:104px}
+.grid .pn{display:flex;align-items:center;gap:10px;justify-content:center}
+.tile{display:grid;grid-template-columns:96px 1fr;gap:16px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px}
+.tile img,.tile .nocover{width:96px;height:132px;object-fit:cover;border-radius:8px;background:#e5e1d6;display:flex;align-items:center;justify-content:center;font-size:40px}
+.bigmsg{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px}
+.bigmsg .ico{font-size:96px}
+.stars{display:flex;gap:6px;justify-content:center}
+.stars button{background:transparent;color:#c9c3b3;font-size:64px;min-height:84px;padding:0 6px;border:0}
+.stars button.on{color:#e2a600}
+.reacts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.reacts button{background:var(--card);color:var(--ink);border:3px solid var(--line);font-size:44px;min-height:84px;padding:0 14px}
+.reacts button.on{border-color:var(--brand);background:#e9eef6}
+.yn{display:flex;gap:10px;align-items:center;justify-content:center}
+.yn span{font-weight:650}
+.yn button{min-height:60px;background:var(--card);color:var(--ink);border:3px solid var(--line);padding:0 22px}
+.yn button.on{border-color:var(--brand);background:#e9eef6}
+input.txt{font:inherit;font-size:28px;padding:14px;border:2px solid var(--line);border-radius:14px;width:100%;user-select:text}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.numpad button{background:var(--card);color:var(--ink);border:2px solid var(--line);font-size:30px}
+.disp{font-size:34px;letter-spacing:.08em;text-align:center;min-height:54px;font-variant-numeric:tabular-nums}
+.small{font-size:15px;color:var(--quiet)}
+.link{background:none;color:#fff;min-height:40px;padding:6px 10px;font-size:16px;opacity:.85;border:1px solid rgba(255,255,255,.4);border-radius:10px}
+pre.log{font-size:14px;white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;max-height:34vh;overflow:auto;user-select:text}
+.alpha{display:flex;flex-wrap:wrap;gap:8px}
+.alpha:empty{display:none}
+.alpha button{min-height:56px;min-width:56px;padding:0 12px;background:var(--card);color:var(--ink);border:2px solid var(--line);font-size:22px;border-radius:12px}
+.alpha button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.cd{height:8px;border-radius:99px;background:var(--line);overflow:hidden;visibility:hidden}
+.cd i{display:block;height:100%;width:100%;background:var(--brand);transform-origin:left}
+.cd.run{visibility:visible}
+.cd.run i{animation:cd linear forwards}
+@keyframes cd{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.mine{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;gap:6px;font-size:17px}
+.mine h4{margin:0;font-size:15px;color:var(--quiet);font-weight:650;text-transform:uppercase;letter-spacing:.04em}
+.mb{display:flex;justify-content:space-between;gap:10px}
+.mb b{font-weight:650;white-space:nowrap}
+.mb.over b{color:var(--bad)}
+.sugg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sg{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:16px;text-align:center;color:var(--ink);min-height:0;align-items:center}
+.sg img,.sg .nocover{width:100%;max-width:110px;height:140px;object-fit:cover;border-radius:8px;background:#e5e1d6;display:flex;align-items:center;justify-content:center;font-size:36px}
+.sg small{color:var(--quiet);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#fff6dc;border:2px solid #ecd48a;border-radius:999px;padding:6px 14px;font-weight:650;font-size:18px}
+.chip.next{background:var(--card);border-color:var(--line);font-weight:500;color:var(--quiet)}
+.celebrate{background:#fff6dc;border:2px solid #ecd48a;border-radius:16px;padding:10px 16px;font-size:22px;font-weight:700;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.modal.on{display:flex}
+.modal .box{background:var(--bg);border-radius:20px;padding:20px;max-width:460px;width:100%;display:flex;flex-direction:column;gap:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 id="cname">Class Library</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="badge" id="syncbadge">ready</span>
+      <button class="link" id="btnLib">🔒</button>
+    </div>
+  </header>
+  <main>
+    <!-- setup -->
+    <section class="screen" id="s-setup">
+      <div class="bigmsg"><div class="ico">📚</div><p class="title">Kiosk not set up</p><p class="sub">Open the kiosk link from the admin page on this device.</p></div>
+    </section>
+
+    <!-- scan -->
+    <section class="screen" id="s-scan">
+      <div class="scanbox"><video id="video" playsinline muted></video><div class="aim"></div><div class="hint" id="scanHint">Hold the book’s barcode in the box</div></div>
+      <div class="row">
+        <button class="ghost" id="btnSearch">🔎 Cover</button>
+        <button class="ghost" id="btnType">⌨️ Type</button>
+        <button class="ghost" id="btnShelf">👤 My books</button>
+        <button class="ghost" id="btnTorch">🔦 Light</button>
+      </div>
+    </section>
+
+    <!-- search -->
+    <section class="screen" id="s-search">
+      <input class="txt" id="searchBox" placeholder="Type a few letters of the title" autocomplete="off">
+      <div class="grid" id="searchGrid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))"></div>
+      <button class="ghost" data-back>← Back</button>
+    </section>
+
+    <!-- type -->
+    <section class="screen" id="s-type">
+      <p class="title">Type the number under the barcode</p>
+      <div class="disp" id="typeDisp"></div>
+      <div class="numpad" id="numpad"></div>
+      <div class="row"><button class="ghost" data-back>← Back</button><button id="typeGo">OK</button></div>
+    </section>
+
+    <!-- name -->
+    <section class="screen" id="s-name">
+      <div class="tile" id="bookTile"></div>
+      <p class="title" id="nameTitle">Who are you?</p>
+      <div class="alpha" id="alphaBar"></div>
+      <div class="grid" id="nameGrid"></div>
+      <button class="ghost" data-back>← Cancel</button>
+    </section>
+
+    <!-- emoji -->
+    <section class="screen" id="s-emoji">
+      <p class="title" id="emojiWho"></p>
+      <p class="sub">Tap your picture</p>
+      <div class="grid emoji" id="emojiGrid"></div>
+      <button class="ghost" id="emojiBack">← Not me</button>
+    </section>
+
+    <!-- action -->
+    <section class="screen" id="s-action">
+      <div class="tile" id="actionTile"></div>
+      <p class="sub" id="actionHint"></p>
+      <div class="mine" id="mineBox"></div>
+      <div class="row" style="flex:1;align-items:stretch">
+        <button class="good" id="btnBorrow" style="font-size:30px">📖 Borrow</button>
+        <button id="btnReturn" style="font-size:30px">↩️ Return</button>
+      </div>
+      <button class="ghost" data-back>← Cancel</button>
+    </section>
+
+    <!-- feedback -->
+    <section class="screen" id="s-feedback">
+      <p class="title" style="text-align:center">How was it?</p>
+      <div class="stars" id="stars"></div>
+      <div class="reacts" id="reacts"></div>
+      <div class="yn"><span>Recommend?</span><button data-yn="rec" data-v="1">👍 Yes</button><button data-yn="rec" data-v="0">👎 No</button></div>
+      <div class="yn"><span>Finished it?</span><button data-yn="fin" data-v="1">✅ Yes</button><button data-yn="fin" data-v="0">📖 Not yet</button></div>
+      <div class="row" style="margin-top:auto"><button class="ghost" id="fbSkip">Skip</button><button class="good" id="fbDone">Done</button></div>
+    </section>
+
+    <!-- result -->
+    <section class="screen" id="s-result">
+      <div class="bigmsg"><div class="ico" id="resIco"></div><p class="title" id="resTitle"></p><p class="sub" id="resSub"></p></div>
+      <div id="resExtra" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div class="cd" id="cd"><i id="cdBar"></i></div>
+      <div class="row" id="resActions"></div>
+    </section>
+
+    <!-- my books -->
+    <section class="screen" id="s-shelf" style="overflow:auto">
+      <p class="title" id="shelfWho"></p>
+      <div class="mine" id="shelfLoans"></div>
+      <div class="chips" id="shelfBadges"></div>
+      <p class="sub" id="shelfNext"></p>
+      <p class="title" style="font-size:22px">You might like</p>
+      <div class="sugg" id="shelfSugg"></div>
+      <button class="ghost" id="shelfDone" style="margin-top:auto">Done</button>
+    </section>
+
+    <!-- librarian -->
+    <section class="screen" id="s-lib">
+      <p class="title">Librarian</p>
+      <p class="sub" id="libInfo"></p>
+      <pre class="log" id="libLog"></pre>
+      <div class="row"><button class="ghost" id="libSync">Sync now</button><button class="ghost" id="libUndo">Undo last borrow</button></div>
+      <div class="row"><button class="ghost" id="libClear">Clear problem list</button><button id="libExit">Exit</button></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="pinModal"><div class="box">
+  <p class="title" id="pinTitle">Teacher PIN</p>
+  <div class="disp" id="pinDisp"></div>
+  <div class="numpad" id="pinPad"></div>
+  <div class="row"><button class="ghost" id="pinCancel">Cancel</button><button id="pinGo">OK</button></div>
+</div></div>
+
+<script src="/vendor/zxing-reader.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const LS = {
+  get: (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// ---------- ISBN ----------
+function validIsbn13(s) {
+  if (!/^97[89]\d{10}$/.test(s)) return false;
+  let sum = 0; for (let i = 0; i < 12; i++) sum += +s[i] * (i % 2 ? 3 : 1);
+  return (10 - sum % 10) % 10 === +s[12];
+}
+function toIsbn13(v) {
+  const s = String(v).replace(/[^0-9Xx]/g, '').toUpperCase();
+  if (s.length === 13 && validIsbn13(s)) return s;
+  if (s.length === 10) {
+    let t = 0; for (let i = 0; i < 10; i++) t += (s[i] === 'X' ? 10 : +s[i]) * (10 - i);
+    if (t % 11 === 0 && /^\d{9}[\dX]$/.test(s)) {
+      const core = '978' + s.slice(0, 9); let sum = 0;
+      for (let i = 0; i < 12; i++) sum += +core[i] * (i % 2 ? 3 : 1);
+      return core + ((10 - sum % 10) % 10);
+    }
+  }
+  return null;
+}
+
+// ---------- state ----------
+const params = new URLSearchParams(location.search);
+if (params.get('t')) { LS.set('token', params.get('t')); history.replaceState(null, '', '/'); }
+let token = LS.get('token', null);
+let data = LS.get('data', null);       // bootstrap snapshot
+let queue = LS.get('queue', []);       // pending actions
+let problems = LS.get('problems', []); // rejected/flagged results
+let history_ = LS.get('recent', []);   // recent actions for undo
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+const save = () => { LS.set('data', data); LS.set('queue', queue); LS.set('problems', problems); LS.set('recent', history_.slice(-20)); };
+
+let cur = { isbn: null, pupil: null, action: null, loanId: null, fb: {}, mode: 'scan' };
+let autoTimer = null, resultId = 0;
+
+// ---------- screens ----------
+const screens = ['setup', 'scan', 'search', 'type', 'name', 'emoji', 'action', 'feedback', 'result', 'shelf', 'lib'];
+let idleTimer = null;
+let current = 'setup';
+function show(name) {
+  current = name;
+  screens.forEach((s) => $('s-' + s).classList.toggle('on', s === name));
+  clearTimeout(idleTimer);
+  if (name === 'scan') { startCamera(); } else { /* keep stream warm */ }
+  if (!['scan', 'result', 'lib'].includes(name)) idleTimer = setTimeout(() => reset(), 60000);
+}
+function reset() { clearTimeout(autoTimer); cur = { isbn: null, pupil: null, action: null, loanId: null, fb: {}, mode: 'scan' }; lastSeen = null; hits = 0; show('scan'); }
+document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', reset));
+
+// ---------- data helpers ----------
+const bookOf = (isbn) => data?.books.find((b) => b.isbn13 === isbn);
+const pupilOf = (id) => data?.pupils.find((p) => p.id === id);
+const coverEl = (isbn) => {
+  const b = bookOf(isbn);
+  return b?.has_cover ? `<img src="/api/cover/${isbn}" alt="">` : `<div class="nocover">📕</div>`;
+};
+function bookTile(isbn, extra = '') {
+  const b = bookOf(isbn);
+  return `${coverEl(isbn)}<div><p class="title" style="font-size:24px">${esc(b?.title || isbn)}</p><p class="sub">${esc(b?.authors || '')}</p>${extra}</div>`;
+}
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nowIso = () => new Date().toISOString();
+const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+// open loans that still count (not returned, not lost)
+const openLoans = (pupilId) => (data?.loans || []).filter((l) => l.pupil_id === pupilId && !l.lost_at);
+function borrowCheck(pupilId, isbn) {
+  const mine = openLoans(pupilId);
+  const reasons = [];
+  if (mine.length >= data.class.max_loans) reasons.push('limit');
+  if (mine.some((l) => l.due_at < nowIso())) reasons.push('overdue');
+  return { reasons, hasTitle: mine.some((l) => l.isbn13 === isbn) };
+}
+function available(isbn) {
+  const b = bookOf(isbn); if (!b) return 0;
+  return b.copies - (data.loans || []).filter((l) => l.isbn13 === isbn).length;
+}
+
+// ---------- sync ----------
+let syncP = null;
+function setBadge() {
+  const el = $('syncbadge');
+  const n = queue.length;
+  if (!navigator.onLine) { el.textContent = n ? `offline · ${n} waiting` : 'offline'; el.className = 'badge off'; }
+  else if (n) { el.textContent = `${n} waiting to sync`; el.className = 'badge warn'; }
+  else { el.textContent = 'synced'; el.className = 'badge'; }
+}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { 'content-type': 'application/json', 'x-kiosk-token': token, ...(opts.headers || {}) } });
+  if (r.status === 401) { LS.set('token', null); token = null; show('setup'); throw new Error('unauthorized'); }
+  if (!r.ok) throw new Error('http ' + r.status);
+  return r.json();
+}
+// One sync at a time; callers that arrive mid-sync get the same promise, so they can wait for it.
+function sync() {
+  if (syncP) return syncP;
+  syncP = runSync().finally(() => { syncP = null; });
+  return syncP;
+}
+async function runSync() {
+  if (!token || !navigator.onLine) { setBadge(); return; }
+  try {
+    const sending = queue.slice(0, 50);
+    const res = await api('/api/kiosk/sync', { method: 'POST', body: JSON.stringify({ actions: sending }) });
+    const byId = new Map(res.results.map((r) => [r.id, r]));
+    for (const a of sending) {
+      const r = byId.get(a.id);
+      if (!r) continue; // not processed; retry later
+      if (r.status === 'blocked' || r.status === 'rejected' || r.status === 'flagged' || r.status === 'invalid' || r.status === 'error') {
+        problems.push({ at: nowIso(), type: a.type, pupil: pupilOf(a.pupil_id)?.name || a.pupil_id, title: bookOf(a.isbn13)?.title || a.isbn13, status: r.status, reason: r.reason || '' });
+      }
+      if (r.status !== 'error') queue = queue.filter((q) => q.id !== a.id);
+    }
+    data = res.bootstrap; // authoritative snapshot (re-apply still-queued actions)
+    reapplyQueue();
+    save();
+  } catch (e) { /* stay queued */ }
+  setBadge();
+}
+function reapplyQueue() {
+  for (const a of queue) applyLocal(a);
+}
+function applyLocal(a) {
+  if (!data) return;
+  if (a.type === 'borrow') {
+    if (!data.loans.some((l) => l.id === a.id)) {
+      const due = new Date(Date.parse(a.at) + data.class.loan_days * 86400000).toISOString();
+      data.loans.push({ id: a.id, pupil_id: a.pupil_id, isbn13: a.isbn13, due_at: due, lost_at: null });
+    }
+  } else {
+    const i = data.loans.findIndex((l) => l.pupil_id === a.pupil_id && l.isbn13 === a.isbn13 && !l.lost_at);
+    if (i >= 0) data.loans.splice(i, 1);
+  }
+}
+function enqueue(a) {
+  queue.push(a); applyLocal(a);
+  history_.push({ id: a.id, type: a.type, pupil_id: a.pupil_id, isbn13: a.isbn13, at: a.at });
+  save(); setBadge(); sync();
+}
+window.addEventListener('online', sync);
+window.addEventListener('offline', setBadge);
+setInterval(sync, 30000);
+
+// ---------- camera + scanning ----------
+const video = $('video');
+let stream = null, scanning = false, lastSeen = null, hits = 0, torchOn = false, wasmReady = null;
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+async function startCamera() {
+  if (scanning) return;
+  scanning = true;
+  try {
+    if (!wasmReady && window.ZXingWASM) {
+      ZXingWASM.setZXingModuleOverrides({ locateFile: (p, prefix) => (p.endsWith('.wasm') ? '/vendor/zxing_reader.wasm' : prefix + p) });
+      wasmReady = ZXingWASM.prepareZXingModule({ fireImmediately: true });
+    }
+    if (!stream) {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 20 } }, audio: false });
+      video.srcObject = stream;
+    }
+    await video.play();
+    try { if (!window._wl && navigator.wakeLock) window._wl = await navigator.wakeLock.request('screen'); } catch {}
+    $('scanHint').textContent = 'Hold the book’s barcode in the box';
+    loop();
+  } catch (e) {
+    scanning = false;
+    $('scanHint').textContent = 'Camera is not available — use “Find by cover” or “Type number”';
+  }
+}
+async function loop() {
+  if (!scanning) return;
+  if (current !== 'scan') { scanning = false; return; }
+  try {
+    if (video.readyState >= 2 && window.ZXingWASM) {
+      await wasmReady;
+      const vw = video.videoWidth, vh = video.videoHeight;
+      // crop to the aim box area (middle band)
+      const sx = Math.floor(vw * 0.1), sw = Math.floor(vw * 0.8), sy = Math.floor(vh * 0.25), sh = Math.floor(vh * 0.5);
+      canvas.width = sw; canvas.height = sh;
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+      const img = ctx.getImageData(0, 0, sw, sh);
+      const found = await ZXingWASM.readBarcodes(img, { formats: ['EAN-13'], maxNumberOfSymbols: 1, tryHarder: true, tryRotate: false });
+      const hit = found.find((f) => f.isValid && toIsbn13(f.text));
+      if (hit) {
+        const isbn = toIsbn13(hit.text);
+        if (isbn === lastSeen) hits++; else { lastSeen = isbn; hits = 1; }
+        if (hits >= 2) { hits = 0; lastSeen = null; onIsbn(isbn); }
+      } else if (!found.length) { hits = 0; lastSeen = null; }
+    }
+  } catch (e) { /* ignore frame errors */ }
+  setTimeout(loop, 90);
+}
+function stopLoop() { scanning = false; }
+$('btnTorch').addEventListener('click', async () => {
+  try {
+    const track = stream?.getVideoTracks()[0];
+    torchOn = !torchOn;
+    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+  } catch { $('scanHint').textContent = 'Light is not available on this device'; }
+});
+
+function beep() {
+  try { navigator.vibrate && navigator.vibrate(60); const a = new (window.AudioContext || window.webkitAudioContext)(); const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = .08; o.start(); setTimeout(() => { o.stop(); a.close(); }, 110); } catch {}
+}
+
+// ---------- flow ----------
+function onIsbn(isbn) {
+  beep();
+  stopLoop();
+  const b = bookOf(isbn);
+  if (!b) { return message('🤔', 'Not in this library', 'This book is not in our class library list. Ask your teacher.', true); }
+  cur.isbn = isbn;
+  showNames();
+}
+let letter = '';
+function showNames() {
+  const shelf = cur.mode === 'shelf';
+  $('bookTile').style.display = shelf ? 'none' : '';
+  if (!shelf) $('bookTile').innerHTML = bookTile(cur.isbn);
+  $('nameTitle').textContent = shelf ? 'Whose books?' : 'Who are you?';
+  letter = ''; renderNames(); show('name');
+}
+function renderNames() {
+  const all = data.pupils;
+  const letters = [...new Set(all.map((p) => p.name[0].toUpperCase()))].sort();
+  const bar = $('alphaBar');
+  bar.innerHTML = all.length <= 12 ? '' : `<button data-l="" class="${letter === '' ? 'on' : ''}">All</button>` + letters.map((l) => `<button data-l="${l}" class="${letter === l ? 'on' : ''}">${l}</button>`).join('');
+  bar.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { letter = b.dataset.l; renderNames(); }));
+  const list = letter ? all.filter((p) => p.name[0].toUpperCase() === letter) : all;
+  $('nameGrid').innerHTML = list.map((p) => `<button data-p="${p.id}"><span class="pn"><span style="font-size:30px">${p.emoji}</span>${esc(p.name)}</span></button>`).join('');
+  $('nameGrid').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => pickPupil(b.dataset.p)));
+}
+const ALL_EMOJI = ['🦊', '🐼', '🐯', '🦁', '🐸', '🐙', '🦄', '🐳', '🦋', '🐢', '🦉', '🐨', '🐧', '🦖', '🚀', '⭐', '🌈', '🍎', '⚽', '🎨'];
+let wrongTries = 0;
+function pickPupil(id) {
+  cur.pupil = id; wrongTries = 0;
+  const p = pupilOf(id);
+  $('emojiWho').textContent = `Hi ${p.name.split(' ')[0]}!`;
+  const mine = p.emoji;
+  const others = data.pupils.filter((x) => x.id !== id).map((x) => x.emoji);
+  const pool = ALL_EMOJI.filter((e) => e !== mine);
+  // prefer emojis that real classmates use so a guess is not trivial
+  const decoys = [...new Set([...others, ...pool])].filter((e) => e !== mine).sort(() => Math.random() - .5).slice(0, 7);
+  const opts = [...decoys, mine].sort(() => Math.random() - .5);
+  $('emojiGrid').innerHTML = opts.map((e) => `<button data-e="${e}">${e}</button>`).join('');
+  $('emojiGrid').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.e === mine) return cur.mode === 'shelf' ? showShelf(id) : showAction();
+    wrongTries++;
+    b.disabled = true;
+    if (wrongTries >= 2) return message('🙈', 'Not quite', 'Try again, or ask your teacher.', true);
+  }));
+  show('emoji');
+}
+$('emojiBack').addEventListener('click', () => showNames());
+
+function showAction() {
+  const isbn = cur.isbn, pid = cur.pupil;
+  const hasTitle = openLoans(pid).some((l) => l.isbn13 === isbn);
+  const p = pupilOf(pid);
+  $('actionTile').innerHTML = bookTile(isbn, `<p class="sub">${esc(p.name)} ${p.emoji}</p>`);
+  const mine = openLoans(pid);
+  $('mineBox').innerHTML = `<h4>Your books (${mine.length} of ${data.class.max_loans})</h4>` + (mine.length ? mine.map((l) => { const over = l.due_at < nowIso(); return `<div class="mb ${over ? 'over' : ''}"><span>${esc(bookOf(l.isbn13)?.title || l.isbn13)}</span><b>${over ? 'Overdue · ' : 'Due '}${fmtDate(l.due_at)}</b></div>`; }).join('') : '<div class="small">Nothing out right now.</div>');
+  $('actionHint').textContent = hasTitle ? 'You have this book — it looks like a return.' : 'Looks like you are borrowing this book.';
+  $('btnBorrow').className = hasTitle ? 'ghost' : 'good';
+  $('btnReturn').className = hasTitle ? '' : 'ghost';
+  $('btnBorrow').style.fontSize = $('btnReturn').style.fontSize = '30px';
+  show('action');
+}
+$('btnBorrow').addEventListener('click', () => doBorrow());
+$('btnReturn').addEventListener('click', () => doReturn());
+
+function doBorrow(overridePin) {
+  const isbn = cur.isbn, pid = cur.pupil;
+  const chk = borrowCheck(pid, isbn);
+  if (chk.hasTitle) return message('📚', 'You already have this', 'Return it first, or pick another book.', true);
+  if (chk.reasons.length && !overridePin) return blocked();
+  if (available(isbn) <= 0) return message('⏳', 'Not here right now', 'Another pupil has the last copy.', true);
+  const a = { id: uuid(), type: 'borrow', pupil_id: pid, isbn13: isbn, at: nowIso(), source: 'kiosk' };
+  if (overridePin) a.override_pin = overridePin;
+  enqueue(a);
+  const loan = data.loans.find((l) => l.id === a.id);
+  const due = loan ? new Date(loan.due_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+  message('🎉', 'Enjoy your book!', due ? `Please return it by ${due}.` : '', false, 3200);
+}
+function blocked() {
+  $('resIco').textContent = '✋'; $('resTitle').textContent = 'Please see your teacher'; $('resSub').textContent = '';
+  $('resActions').innerHTML = `<button class="ghost" id="rOk">OK</button><button class="ghost" id="rTeacher">Teacher</button>`;
+  $('rOk').onclick = reset;
+  $('rTeacher').onclick = () => askPin('Teacher PIN', 'override', (pin) => doBorrow(pin));
+  show('result');
+}
+function doReturn() {
+  const isbn = cur.isbn, pid = cur.pupil;
+  const has = openLoans(pid).some((l) => l.isbn13 === isbn);
+  if (!has) return message('🤷', 'Not on your list', 'You do not have this book out. Ask your teacher.', true);
+  cur.fb = {}; $('stars').innerHTML = ''; buildFeedback(); show('feedback');
+}
+function buildFeedback() {
+  const st = $('stars');
+  st.innerHTML = [1, 2, 3, 4, 5].map((n) => `<button data-n="${n}">★</button>`).join('');
+  st.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { cur.fb.stars = +b.dataset.n; st.querySelectorAll('button').forEach((x) => x.classList.toggle('on', +x.dataset.n <= cur.fb.stars)); }));
+  const rs = $('reacts');
+  rs.innerHTML = ['😍', '😊', '😐', '😴', '😕'].map((e) => `<button data-e="${e}">${e}</button>`).join('');
+  rs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { cur.fb.emoji = b.dataset.e; rs.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); }));
+  document.querySelectorAll('[data-yn]').forEach((b) => { b.classList.remove('on'); b.onclick = () => { const k = b.dataset.yn === 'rec' ? 'recommend' : 'finished'; cur.fb[k] = b.dataset.v === '1'; document.querySelectorAll(`[data-yn="${b.dataset.yn}"]`).forEach((x) => x.classList.toggle('on', x === b)); }; });
+}
+function finishReturn(withFb) {
+  const a = { id: uuid(), type: 'return', pupil_id: cur.pupil, isbn13: cur.isbn, at: nowIso(), source: 'kiosk' };
+  if (withFb && Object.keys(cur.fb).length) a.response = cur.fb;
+  enqueue(a);
+  message('👍', 'Thank you!', 'Book returned.', false, 3500);
+  afterReturn(a.pupil_id, withFb && cur.fb.finished === true);
+}
+$('fbSkip').addEventListener('click', () => finishReturn(false));
+$('fbDone').addEventListener('click', () => finishReturn(true));
+
+function startAuto(ms) {
+  clearTimeout(autoTimer);
+  const cd = $('cd'), bar = $('cdBar');
+  cd.classList.remove('run'); void cd.offsetWidth;
+  bar.style.animationDuration = ms + 'ms'; cd.classList.add('run');
+  autoTimer = setTimeout(() => { if (current === 'result') reset(); }, ms);
+}
+function message(ico, title, sub, tapToClose, autoMs) {
+  resultId++;
+  $('resIco').textContent = ico; $('resTitle').textContent = title; $('resSub').textContent = sub;
+  $('resExtra').innerHTML = '';
+  $('resActions').innerHTML = tapToClose ? `<button id="rOk">OK</button>` : `<button class="ghost" id="rOk">Next pupil ➜</button>`;
+  $('rOk').onclick = reset;
+  $('cd').classList.remove('run');
+  show('result');
+  clearTimeout(autoTimer);
+  if (autoMs) startAuto(autoMs);
+}
+
+// ---------- summary, badges, suggestions ----------
+const summaries = {};
+async function getSummary(pid) {
+  if (!navigator.onLine) return summaries[pid] || null;
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 3000);
+  try {
+    const r = await fetch(`/api/kiosk/pupil/${pid}/summary`, { headers: { 'x-kiosk-token': token }, signal: ctl.signal });
+    if (!r.ok) return summaries[pid] || null;
+    return (summaries[pid] = await r.json());
+  } catch { return summaries[pid] || null; } finally { clearTimeout(t); }
+}
+function localFavourites(pid) {
+  const mine = new Set(openLoans(pid).map((l) => l.isbn13));
+  return (data.favourites || []).filter((i) => !mine.has(i) && available(i) > 0).slice(0, 3).map((i) => ({ isbn13: i, title: bookOf(i)?.title, has_cover: bookOf(i)?.has_cover, reason: 'Class favourite' }));
+}
+function suggHtml(list) {
+  return list.map((g) => `<button class="sg" data-sg="${g.isbn13}">${g.has_cover ? `<img src="/api/cover/${g.isbn13}" alt="">` : '<div class="nocover">📕</div>'}<b>${esc(g.title)}</b><small>${esc(g.reason)}</small></button>`).join('');
+}
+function bindSugg(root) {
+  root.querySelectorAll('[data-sg]').forEach((b) => b.addEventListener('click', () => { cur.isbn = b.dataset.sg; cur.mode = 'scan'; showAction(); }));
+}
+function badgeChips(s) {
+  return s.earned.map((b) => `<span class="chip">${b.icon} ${esc(b.name)}</span>`).join('') + (s.next ? `<span class="chip next">${s.next.remaining} more finished → ${s.next.icon} ${esc(s.next.name)}</span>` : '');
+}
+async function showShelf(pid) {
+  const p = pupilOf(pid); cur.pupil = pid;
+  $('shelfWho').textContent = `${p.emoji} ${p.name.split(' ')[0]}’s books`;
+  const mine = openLoans(pid);
+  $('shelfLoans').innerHTML = `<h4>On loan (${mine.length} of ${data.class.max_loans})</h4>` + (mine.length ? mine.map((l) => { const over = l.due_at < nowIso(); return `<div class="mb ${over ? 'over' : ''}"><span>${esc(bookOf(l.isbn13)?.title || l.isbn13)}</span><b>${over ? 'Overdue · ' : 'Due '}${fmtDate(l.due_at)}</b></div>`; }).join('') : '<div class="small">Nothing out right now.</div>');
+  $('shelfBadges').innerHTML = ''; $('shelfNext').textContent = 'Loading…';
+  $('shelfSugg').innerHTML = suggHtml(localFavourites(pid)); bindSugg($('shelfSugg'));
+  show('shelf');
+  const id = ++resultId;
+  const s = await getSummary(pid);
+  if (id !== resultId || current !== 'shelf' || !s) { if (id === resultId) $('shelfNext').textContent = ''; return; }
+  $('shelfBadges').innerHTML = badgeChips(s);
+  $('shelfNext').textContent = s.streak >= 1 ? `🔥 ${s.streak}-week reading streak` : (s.finished ? '' : 'Tick “Finished it?” when you return a book to earn badges.');
+  $('shelfSugg').innerHTML = suggHtml(s.suggestions.length ? s.suggestions : localFavourites(pid)); bindSugg($('shelfSugg'));
+}
+$('btnShelf').addEventListener('click', () => { stopLoop(); cur = { isbn: null, pupil: null, action: null, loanId: null, fb: {}, mode: 'shelf' }; showNames(); });
+$('shelfDone').addEventListener('click', reset);
+async function afterReturn(pid, wasFinished) {
+  const id = resultId;
+  await sync();
+  if (queue.length && navigator.onLine) await sync(); // anything queued while the first sync ran
+  const s = await getSummary(pid);
+  if (id !== resultId || current !== 'result') return;
+  let html = '';
+  const hit = s && wasFinished ? s.earned.find((b) => b.at === s.finished && b.at > 0) : null;
+  if (hit) html += `<div class="celebrate">🎉 New badge! ${hit.icon} ${esc(hit.name)}</div>`;
+  const list = s && s.suggestions.length ? s.suggestions : localFavourites(pid);
+  if (list.length) html += `<p class="sub" style="text-align:center">Next, you might like…</p><div class="sugg">${suggHtml(list)}</div>`;
+  if (!html) return;
+  $('resExtra').innerHTML = html; bindSugg($('resExtra'));
+  startAuto(10000);
+}
+
+// ---------- search by cover + typing ----------
+$('btnSearch').addEventListener('click', () => { stopLoop(); $('searchBox').value = ''; renderSearch(''); show('search'); });
+$('searchBox').addEventListener('input', (e) => renderSearch(e.target.value));
+function renderSearch(q) {
+  q = q.trim().toLowerCase();
+  const list = (data?.books || []).filter((b) => !q || (b.title || '').toLowerCase().includes(q) || (b.authors || '').toLowerCase().includes(q)).slice(0, 60);
+  $('searchGrid').innerHTML = list.map((b) => `<button data-i="${b.isbn13}" style="min-height:auto;padding:8px;display:flex;flex-direction:column;gap:6px;font-size:15px">${coverEl(b.isbn13).replace('<img', '<img style="width:100%;height:150px;object-fit:cover;border-radius:6px"').replace('class="nocover"', 'class="nocover" style="width:100%;height:150px"')}<span>${esc(b.title)}</span></button>`).join('') || '<p class="sub">No match</p>';
+  $('searchGrid').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => onIsbn(b.dataset.i)));
+}
+let typed = '';
+function makePad(el, onKey) {
+  el.innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', 'X'].map((k) => `<button data-k="${k}">${k}</button>`).join('');
+  el.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => onKey(b.dataset.k)));
+}
+$('btnType').addEventListener('click', () => { stopLoop(); typed = ''; $('typeDisp').textContent = ''; show('type'); });
+makePad($('numpad'), (k) => { typed = k === '⌫' ? typed.slice(0, -1) : (typed + k).slice(0, 13); $('typeDisp').textContent = typed; });
+$('typeGo').addEventListener('click', () => { const i = toIsbn13(typed); if (!i) { $('typeDisp').textContent = typed + '  ✗'; return; } onIsbn(i); });
+
+// ---------- PIN modal ----------
+let pinBuf = '', pinCb = null, pinKind = 'override';
+makePad($('pinPad'), (k) => { if (k === 'X') return; pinBuf = k === '⌫' ? pinBuf.slice(0, -1) : (pinBuf + k).slice(0, 8); $('pinDisp').textContent = '•'.repeat(pinBuf.length); });
+function askPin(title, kind, cb) { pinBuf = ''; pinCb = cb; pinKind = kind; $('pinTitle').textContent = title; $('pinDisp').textContent = ''; $('pinModal').classList.add('on'); }
+$('pinCancel').addEventListener('click', () => { $('pinModal').classList.remove('on'); });
+$('pinGo').addEventListener('click', async () => {
+  const pin = pinBuf; $('pinModal').classList.remove('on');
+  if (!navigator.onLine) { $('pinDisp').textContent = ''; return message('📡', 'Offline', 'PIN check needs the internet.', true); }
+  try {
+    const r = await api('/api/kiosk/unlock', { method: 'POST', body: JSON.stringify({ kind: pinKind, pin }) });
+    if (!r.ok) return message('🔒', 'Wrong PIN', '', true);
+    pinCb(pin);
+  } catch { message('📡', 'Could not check PIN', 'Try again.', true); }
+});
+
+// ---------- librarian ----------
+$('btnLib').addEventListener('click', () => askPin('Librarian PIN', 'librarian', () => showLib()));
+function showLib() {
+  stopLoop();
+  $('libInfo').textContent = `${queue.length} waiting to sync · ${problems.length} problem(s) · v${data?.version || '?'}`;
+  const WHY = { limit: 'has too many books out', overdue: 'has an overdue book', unavailable: 'no copy was available', has_title: 'already has this book', bad_pin: 'the teacher PIN was wrong', pupil: 'name not found', not_in_class: 'book is not in this class library', no_open_loan: 'the return did not match any loan' };
+  const lines = problems.slice(-30).reverse().map((p) => `${new Date(p.at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} — ${p.pupil} ${p.type === 'return' ? 'returning' : 'borrowing'} “${p.title}”: ${WHY[p.reason] || p.reason || p.status}`);
+  $('libLog').textContent = lines.join('\n') || 'No problems recorded.';
+  show('lib');
+}
+$('libSync').addEventListener('click', async () => { await sync(); showLib(); });
+$('libClear').addEventListener('click', () => { problems = []; save(); showLib(); });
+$('libExit').addEventListener('click', reset);
+$('libUndo').addEventListener('click', () => {
+  const last = [...history_].reverse().find((h) => h.type === 'borrow');
+  if (!last) return;
+  if (!openLoans(last.pupil_id).some((l) => l.isbn13 === last.isbn13)) { $('libInfo').textContent = 'Last borrow is already returned.'; return; }
+  enqueue({ id: uuid(), type: 'return', pupil_id: last.pupil_id, isbn13: last.isbn13, at: nowIso(), source: 'librarian' });
+  history_ = history_.filter((h) => h.id !== last.id); save(); showLib();
+  $('libInfo').textContent = 'Last borrow undone.';
+});
+
+// ---------- boot ----------
+async function boot() {
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  if (!token) return show('setup');
+  setBadge();
+  try { data = await api('/api/kiosk/bootstrap'); reapplyQueue(); save(); } catch (e) { if (!data) return show('setup'); }
+  $('cname').textContent = data.class.name;
+  await sync();
+  show('scan');
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && current === 'scan') { scanning = false; startCamera(); } });
+boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Class Library — Admin</title>
+<style>
+:root{--bg:#f6f3ec;--ink:#1d2433;--quiet:#5c6578;--card:#fff;--line:#d9d4c7;--brand:#1f3a5f;--good:#2e7d4f;--warn:#b26a00;--bad:#b3392f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--brand);color:#fff;padding:12px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;flex:1}
+select,input,textarea,button{font:inherit}
+select,input[type=text],input[type=password],input[type=number],textarea{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;max-width:100%}
+button{padding:8px 14px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button.bad{background:var(--bad)}
+button.good{background:var(--good)}
+button[disabled]{opacity:.5}
+nav{display:flex;gap:4px;padding:10px 18px 0;flex-wrap:wrap}
+nav button{background:transparent;color:var(--quiet);border-radius:8px 8px 0 0;border-bottom:3px solid transparent}
+nav button.on{color:var(--brand);border-bottom-color:var(--brand)}
+main{padding:16px 18px;max-width:1100px;margin:0 auto}
+section{display:none}
+section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:17px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+.tile b{display:block;font-size:34px}
+.tile.warn b{color:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--quiet);font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.small{font-size:13px;color:var(--quiet)}
+.ok{color:var(--good)} .err{color:var(--bad)} .warnc{color:var(--warn)}
+code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
+.att{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-left-width:6px;border-radius:10px;background:#fff;margin-bottom:10px;cursor:pointer}
+.att:hover{background:#faf8f2}
+.att.act{border-left-color:var(--bad)} .att.todo{border-left-color:var(--warn)} .att.info{border-left-color:#8a93a6}
+.att b{display:block}
+.att .go{margin-left:auto;color:var(--brand);font-weight:600;white-space:nowrap}
+.rolechip{background:rgba(255,255,255,.18);border-radius:999px;padding:3px 10px;font-size:13px}
+nav button[data-super]{display:none}
+body.super nav button[data-super]{display:inline-block}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0}
+footer{padding:14px 18px;text-align:center}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:9;max-width:90%}
+.scanwrap{position:relative;width:100%;max-width:420px;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden}
+.scanwrap video{width:100%;height:100%;object-fit:cover}
+.scanwrap .aim{position:absolute;left:10%;right:10%;top:30%;bottom:30%;border:3px solid #fff;border-radius:10px}
+progress{width:100%;height:14px}
+#login{max-width:420px;margin:12vh auto;text-align:center}
+.thumb{width:36px;height:50px;object-fit:cover;border-radius:3px;background:#e5e1d6;vertical-align:middle}
+</style>
+</head>
+<body>
+<div id="login" style="display:none" class="card">
+  <h2>Class Library admin</h2>
+  <p class="small">Teachers: if you use school email sign-in, open this page from your Access link. Otherwise enter the admin key (the ADMIN_KEY secret you set on the Worker).</p>
+  <p><input type="password" id="keyInput" placeholder="Admin key" style="width:100%"></p>
+  <p><button id="keyGo">Sign in</button></p>
+  <p class="err" id="keyErr"></p>
+  <p><a href="/guide/">Open the user guide</a></p>
+</div>
+
+<div id="shell" style="display:none">
+<header>
+  <h1>📚 Class Library — Admin</h1>
+  <span class="rolechip" id="roleChip"></span>
+  <select id="classSel"></select>
+  <button class="ghost" id="newClass">+ New class</button>
+  <button class="ghost" id="logout">Sign out</button>
+</header>
+<nav id="tabs">
+  <button data-t="home" class="on">Needs attention</button>
+  <button data-t="dash">Dashboard</button>
+  <button data-t="books">Books</button>
+  <button data-t="pupils">Pupils</button>
+  <button data-t="reports">Reports</button>
+  <button data-t="setup">Kiosk &amp; PINs</button>
+  <button data-t="overview" data-super>All classes</button>
+  <button data-t="teachers" data-super>Teachers</button>
+</nav>
+<main>
+
+<section id="t-home" class="on">
+  <div class="card"><h3>Needs attention <span class="small" id="homeSeen"></span></h3><div id="homeList"></div></div>
+</section>
+
+<section id="t-overview">
+  <div class="card"><h3>All classes</h3><div id="overviewTable"></div></div>
+  <div class="card"><h3>Activity across all classes</h3><button class="ghost" id="allAuditBtn">Load latest 300</button><div id="allAudit"></div></div>
+</section>
+
+<section id="t-teachers">
+  <div class="card">
+    <h3>Add or edit a teacher</h3>
+    <p class="small" id="accessNote"></p>
+    <div class="row"><input type="text" id="tEmail" placeholder="teacher@school.edu.sg" style="min-width:260px"><input type="text" id="tName" placeholder="Name (optional)"><select id="tRole"><option value="teacher">Teacher (assigned classes)</option><option value="superadmin">Supervisor (all classes)</option></select></div>
+    <div class="checks" id="tClasses"></div>
+    <div class="row"><button id="tSave">Save teacher</button><span class="small" id="tMsg"></span></div>
+  </div>
+  <div class="card"><h3>Teachers</h3><div id="teacherList"></div></div>
+</section>
+
+<section id="t-dash">
+  <div class="tiles" id="tiles"></div>
+  <div class="card"><h3>Overdue</h3><div id="overdueList"></div></div>
+  <div class="card"><h3>On loan now</h3><div id="onLoanList"></div></div>
+  <div class="card"><h3>Lost</h3><div id="lostList"></div></div>
+</section>
+
+<section id="t-books">
+  <div class="card">
+    <h3>Add books</h3>
+    <div class="row">
+      <input type="text" id="isbnIn" placeholder="ISBN (10 or 13 digits)" inputmode="numeric">
+      <input type="number" id="copiesIn" value="1" min="1" max="20" style="width:80px" title="Copies">
+      <button id="addIsbn">Add</button>
+      <button class="ghost" id="scanToggle">📷 Scan to add</button>
+    </div>
+    <div id="scanArea" style="display:none">
+      <div class="scanwrap"><video id="adminVideo" playsinline muted></video><div class="aim"></div></div>
+      <p class="small">Scan one barcode at a time. Each hit is added and looked up automatically.</p>
+    </div>
+    <div id="addLog" class="small"></div>
+  </div>
+  <div class="card">
+    <h3>Import from Excel</h3>
+    <p class="small">One column of ISBNs, or a sheet with columns <b>isbn, title, authors, copies</b>. <a href="#" id="tmpl">Download template</a> (ISBN column is pre-formatted as text so Excel will not turn it into 9.78E+12).</p>
+    <div class="row"><input type="file" id="xlsxIn" accept=".xlsx,.xls,.csv"><button id="importGo" disabled>Import</button></div>
+    <div id="importPreview"></div>
+    <progress id="importProg" value="0" max="1" style="display:none"></progress>
+    <div id="importResult"></div>
+  </div>
+  <div class="card"><h3>Catalogue <span class="small" id="bookCount"></span></h3><div id="bookList"></div></div>
+</section>
+
+<section id="t-pupils">
+  <div class="card">
+    <h3>Add pupils</h3>
+    <p class="small">One pupil per line, e.g. <code>Aisha Rahman</code>. Pupils see only “Aisha R.”. Each gets an emoji.</p>
+    <textarea id="pupilText" rows="6" style="width:100%" placeholder="Aisha Rahman&#10;Ben Tan&#10;Chloe Lim"></textarea>
+    <div class="row"><label><input type="checkbox" id="storeSurname"> Also store full surname (teacher-only view)</label><button id="addPupils">Add pupils</button></div>
+    <div id="pupilMsg" class="small"></div>
+  </div>
+  <div class="card"><h3>Pupils</h3><div id="pupilList"></div></div>
+  <div class="card"><h3>Year end</h3><p class="small">Deletes all pupils, loans and responses for this class and archives it. Books stay in the catalogue. This cannot be undone.</p><button class="bad" id="archiveBtn">Archive class…</button></div>
+</section>
+
+<section id="t-reports">
+  <div class="card">
+    <h3>Reports</h3>
+    <div class="row" id="reportBtns"></div>
+    <div class="row"><button class="ghost" id="csvBtn" disabled>⬇ Download CSV</button><button class="ghost" id="printBtn" disabled>🖨 Print</button></div>
+    <div id="reportOut"></div>
+  </div>
+  <div class="card"><h3>Activity log</h3><button class="ghost" id="auditBtn">Load latest 200</button><div id="auditOut"></div></div>
+</section>
+
+<section id="t-setup">
+  <div class="card">
+    <h3>Kiosk link</h3>
+    <p class="small">Open this link once on the classroom tablet. It stores a device token, then the app runs full-screen from the home screen.</p>
+    <p class="mono" id="kioskLink"></p>
+    <div class="row"><button class="ghost" id="copyLink">Copy link</button><button class="ghost" id="rotate">Revoke &amp; make new link</button></div>
+  </div>
+  <div class="card">
+    <h3>PINs</h3>
+    <p class="small">Librarian PIN unlocks the librarian screen on the kiosk. Teacher PIN approves a borrow that was blocked (limit or overdue). 4–8 digits.</p>
+    <div class="row"><input type="password" id="libPin" placeholder="Librarian PIN" inputmode="numeric"><button id="setLib">Set librarian PIN</button></div>
+    <div class="row"><input type="password" id="ovPin" placeholder="Teacher override PIN" inputmode="numeric"><button id="setOv">Set teacher PIN</button></div>
+  </div>
+</section>
+</main>
+<footer class="small" id="verFoot"></footer>
+</div>
+<div id="toast"></div>
+
+<script src="/vendor/xlsx.full.min.js"></script>
+<script src="/vendor/zxing-reader.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+let key = sessionStorage.getItem('adminKey') || '';
+let classes = [], cid = null, curReport = null, me = null;
+
+function toast(msg, ms = 2500) { const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', ms); }
+async function api(path, opts = {}) {
+  const r = await fetch('/api/admin' + path, { ...opts, headers: { ...(key ? { 'x-admin-key': key } : {}), ...(opts.body && !(opts.body instanceof ArrayBuffer || opts.body instanceof Blob) ? { 'content-type': 'application/json' } : {}), ...(opts.headers || {}) } });
+  if (r.status === 401) { signOut(); throw new Error('unauthorized'); }
+  const type = r.headers.get('content-type') || '';
+  const out = type.includes('json') ? await r.json() : await r.text();
+  if (!r.ok) throw new Error(out?.message || 'Request failed');
+  return out;
+}
+const post = (path, body) => api(path, { method: 'POST', body: JSON.stringify(body || {}) });
+
+// ---------- auth ----------
+async function loadMe() {
+  try { const r = await fetch('/api/admin/me', { headers: key ? { 'x-admin-key': key } : {} }); return r.ok ? await r.json() : null; } catch { return null; }
+}
+function signOut(msg) { sessionStorage.removeItem('adminKey'); key = ''; $('shell').style.display = 'none'; $('login').style.display = 'block'; $('keyErr').textContent = typeof msg === 'string' ? msg : ''; }
+$('logout').onclick = () => { const viaAccess = me && me.email !== 'admin-key'; signOut(); if (viaAccess) location.href = '/cdn-cgi/access/logout'; };
+$('keyGo').onclick = async () => {
+  key = $('keyInput').value.trim();
+  me = await loadMe();
+  if (me && me.role !== 'unregistered') { sessionStorage.setItem('adminKey', key); start(); } else { key = ''; $('keyErr').textContent = 'That key was not accepted.'; }
+};
+$('keyInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('keyGo').click(); });
+
+// ---------- tabs ----------
+$('tabs').querySelectorAll('button').forEach((b) => b.onclick = () => {
+  $('tabs').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  document.querySelectorAll('main > section').forEach((s) => s.classList.toggle('on', s.id === 't-' + b.dataset.t));
+  if (b.dataset.t !== 'books') stopScan();
+  refresh(b.dataset.t);
+});
+function goTab(t) { document.querySelector(`#tabs button[data-t="${t}"]`).click(); }
+
+// ---------- classes ----------
+async function loadClasses() {
+  classes = (await api('/classes')).filter((c) => !c.archived_at);
+  $('classSel').innerHTML = classes.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join('') || '<option value="">(no class yet)</option>';
+  cid = classes.find((c) => c.id === localStorage.getItem('lastClass'))?.id || classes[0]?.id || null;
+  if (cid) $('classSel').value = cid;
+}
+$('classSel').onchange = () => { cid = $('classSel').value; localStorage.setItem('lastClass', cid); refresh(); };
+$('newClass').onclick = async () => {
+  if (me.role !== 'superadmin') return toast('Only the supervisor can create classes');
+  const name = prompt('Class name (e.g. 5 Integrity)'); if (!name) return;
+  const c = await post('/classes', { name });
+  await loadClasses(); cid = c.id; $('classSel').value = cid; refresh(); toast('Class created — set PINs and open the kiosk link under “Kiosk & PINs”.', 5000);
+};
+function activeTab() { return document.querySelector('#tabs button.on').dataset.t; }
+async function start() {
+  if (me.role === 'unregistered') return signOut(`${me.email} is signed in but has not been added as a teacher. Ask the supervisor to add you.`);
+  $('login').style.display = 'none'; $('shell').style.display = 'block';
+  document.body.classList.toggle('super', me.role === 'superadmin');
+  $('roleChip').textContent = `${me.name} · ${me.role === 'superadmin' ? 'Supervisor' : 'Teacher'}`;
+  $('verFoot').textContent = `Class Library v${me.version}`;
+  await loadClasses();
+  if (!classes.length && me.role === 'teacher') toast('No classes assigned to you yet. Ask the supervisor.', 6000);
+  refresh();
+}
+function needClass() { if (!cid) { toast('Create a class first'); return false; } return true; }
+
+function refresh(tab = activeTab()) {
+  if (!cid && !['overview', 'teachers'].includes(tab)) { if (tab === 'home') $('homeList').innerHTML = '<p class="small">No class selected. ' + (me?.role === 'superadmin' ? 'Use “+ New class”.' : 'Ask the supervisor to assign you a class.') + '</p>'; return; }
+  ({ home: loadHome, dash: loadDash, books: loadBooks, pupils: loadPupils, reports: () => {}, setup: loadSetup, overview: loadOverview, teachers: loadTeachers }[tab] || (() => {}))();
+}
+
+// ---------- needs attention ----------
+const rel = (iso) => { if (!iso) return 'never'; const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 2 ? 'just now' : m < 90 ? m + ' min ago' : m < 2880 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' days ago'; };
+async function loadHome() {
+  const a = await api(`/classes/${cid}/attention`);
+  $('homeSeen').textContent = `Kiosk last seen: ${rel(a.last_seen_at)}`;
+  const icon = { act: '🔴', todo: '🟠', info: '⚪' };
+  $('homeList').innerHTML = a.items.length ? a.items.map((i) => `<div class="att ${i.level}" data-go="${i.tab}"><span>${icon[i.level]}</span><div><b>${esc(i.title)}</b><span class="small">${esc(i.detail)}</span></div><span class="go">Open ›</span></div>`).join('') : '<p class="ok"><b>✓ All clear.</b> Nothing needs your attention.</p>';
+}
+$('homeList').onclick = (e) => { const t = e.target.closest('[data-go]')?.dataset.go; if (t) goTab(t); };
+
+// ---------- supervisor: all classes + teachers ----------
+async function loadOverview() {
+  const rows = await api('/overview');
+  const tot = (k) => rows.reduce((a, r) => a + r[k], 0);
+  $('overviewTable').innerHTML = rows.length ? `<table><thead><tr><th>Class</th><th>Teachers</th><th>Titles</th><th>Pupils</th><th>On loan</th><th>Overdue</th><th>Lost</th><th>Kiosk seen</th><th></th></tr></thead><tbody>${rows.map((r) => `<tr><td><b>${esc(r.name)}</b></td><td class="small">${r.teachers.length ? esc(r.teachers.join(', ')) : '<span class="warnc">none assigned</span>'}</td><td>${r.titles}</td><td>${r.pupils}</td><td>${r.on_loan}</td><td class="${r.overdue ? 'err' : ''}">${r.overdue}</td><td>${r.lost}</td><td class="${!r.last_seen_at || Date.now() - Date.parse(r.last_seen_at) > 3 * 864e5 ? 'warnc' : ''}">${rel(r.last_seen_at)}</td><td><button class="ghost" data-open="${r.id}">Open</button></td></tr>`).join('')}<tr><td><b>Total</b></td><td></td><td><b>${tot('titles')}</b></td><td><b>${tot('pupils')}</b></td><td><b>${tot('on_loan')}</b></td><td><b>${tot('overdue')}</b></td><td><b>${tot('lost')}</b></td><td></td><td></td></tr></tbody></table>` : '<p class="small">No classes yet.</p>';
+}
+$('overviewTable').onclick = (e) => { const id = e.target.dataset?.open; if (!id) return; cid = id; $('classSel').value = id; localStorage.setItem('lastClass', id); goTab('home'); };
+$('allAuditBtn').onclick = async () => { const rows = await api('/audit'); $('allAudit').innerHTML = table([['at', 'When'], ['class_name', 'Class'], ['actor', 'Who'], ['action', 'Action'], ['detail', 'Detail']], rows.map((r) => ({ ...r, class_name: r.class_name || '—', at: r.at.slice(0, 16).replace('T', ' ') }))); };
+
+let teachers = [];
+async function loadTeachers() {
+  $('accessNote').textContent = me.access_configured ? 'Teachers sign in with their school email through Cloudflare Access. Add their email here and tick their classes.' : 'Cloudflare Access is not configured yet, so teachers cannot sign in with email. Follow the “Teacher sign-in” steps in the README. Until then, only the admin key works.';
+  const [all, ts] = await Promise.all([api('/classes'), api('/teachers')]);
+  teachers = ts;
+  $('tClasses').innerHTML = all.filter((c) => !c.archived_at).map((c) => `<label><input type="checkbox" data-tc="${c.id}"> ${esc(c.name)}</label>`).join('') || '<span class="small">Create a class first.</span>';
+  $('teacherList').innerHTML = ts.length ? `<table><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Classes</th><th></th></tr></thead><tbody>${ts.map((t) => `<tr><td>${esc(t.email)}</td><td>${esc(t.name || '')}</td><td>${t.role === 'superadmin' ? 'Supervisor' : 'Teacher'}</td><td class="small">${t.role === 'superadmin' ? 'all' : t.class_ids.map((id) => esc(all.find((c) => c.id === id)?.name || '?')).join(', ') || '<span class="warnc">none</span>'}</td><td><button class="ghost" data-tedit="${esc(t.email)}">Edit</button> <button class="ghost bad" style="color:#fff" data-tdel="${esc(t.email)}">Remove</button></td></tr>`).join('')}</tbody></table>` : '<p class="small">No teachers added yet.</p>';
+}
+$('tSave').onclick = async () => {
+  try {
+    const class_ids = [...document.querySelectorAll('[data-tc]:checked')].map((x) => x.dataset.tc);
+    await post('/teachers', { email: $('tEmail').value, name: $('tName').value, role: $('tRole').value, class_ids });
+    $('tMsg').textContent = 'Saved.'; $('tEmail').value = ''; $('tName').value = ''; loadTeachers();
+  } catch (e) { $('tMsg').textContent = e.message; }
+};
+$('teacherList').onclick = async (e) => {
+  const ed = e.target.dataset?.tedit, del = e.target.dataset?.tdel;
+  if (ed) { const t = teachers.find((x) => x.email === ed); $('tEmail').value = t.email; $('tName').value = t.name || ''; $('tRole').value = t.role; document.querySelectorAll('[data-tc]').forEach((c) => c.checked = t.class_ids.includes(c.dataset.tc)); window.scrollTo(0, 0); }
+  if (del && confirm(`Remove ${del}? They will no longer be able to sign in.`)) { await post('/teachers/remove', { email: del }); loadTeachers(); }
+};
+
+// ---------- dashboard ----------
+const table = (cols, rows, actions) => rows.length
+  ? `<table><thead><tr>${cols.map((c) => `<th>${c[1]}</th>`).join('')}${actions ? '<th></th>' : ''}</tr></thead><tbody>${rows.map((r) => `<tr>${cols.map((c) => `<td>${esc(r[c[0]])}</td>`).join('')}${actions ? `<td>${actions(r)}</td>` : ''}</tr>`).join('')}</tbody></table>`
+  : '<p class="small">Nothing here.</p>';
+async function loadDash() {
+  if (!cid) { $('tiles').innerHTML = '<p class="small">Create a class to begin.</p>'; return; }
+  const d = await api(`/classes/${cid}/dashboard`);
+  $('tiles').innerHTML = `<div class="tile"><b>${d.counts.titles}</b>titles</div><div class="tile"><b>${d.counts.pupils}</b>pupils</div><div class="tile"><b>${d.onLoan.length}</b>on loan</div><div class="tile ${d.overdue.length ? 'warn' : ''}"><b>${d.overdue.length}</b>overdue</div><div class="tile"><b>${d.lost.length}</b>lost</div>`;
+  const lostBtn = (r) => `<button class="ghost" data-lost="${r.loan_id}">Mark lost</button>`;
+  $('overdueList').innerHTML = table([['pupil', 'Pupil'], ['title', 'Book'], ['due', 'Due'], ['days_late', 'Days late']], d.overdue, lostBtn);
+  $('onLoanList').innerHTML = table([['pupil', 'Pupil'], ['title', 'Book'], ['borrowed', 'Borrowed'], ['due', 'Due']], d.onLoan, lostBtn);
+  $('lostList').innerHTML = table([['pupil', 'Last borrower'], ['title', 'Book'], ['lost_on', 'Lost on'], ['note', 'Note']], d.lost, (r) => `<button class="good" data-found="${r.loan_id}">Mark found</button>`);
+}
+document.addEventListener('click', async (e) => {
+  const l = e.target.dataset?.lost, f = e.target.dataset?.found;
+  try {
+    if (l) { const note = prompt('Note (optional)') ?? null; if (note === null && !confirm('Mark as lost?')) return; await post(`/loans/${l}/lost`, { note }); toast('Marked lost'); loadDash(); }
+    if (f) { await post(`/loans/${f}/found`); toast('Marked found — back on the shelf'); loadDash(); }
+  } catch (err) { toast(err.message); }
+});
+
+// ---------- books ----------
+let bookRows = [], editing = null;
+async function loadBooks() { bookRows = await api(`/classes/${cid}/books`); editing = null; renderBooks(); }
+function renderBooks() {
+  const rows = bookRows;
+  $('bookCount').textContent = `(${rows.filter((b) => !b.withdrawn).length} titles)`;
+  const cell = (b) => `<td>${b.has_cover ? `<img class="thumb" src="/api/cover/${b.isbn13}" loading="lazy">` : '<span class="warnc">no cover</span>'}</td>`;
+  const line = (b) => b.isbn13 === editing
+    ? `<tr>${cell(b)}<td><input type="text" id="eTitle" value="${esc(b.title || '')}" style="width:100%"></td><td><input type="text" id="eAuth" value="${esc(b.authors || '')}" style="width:100%"></td><td class="mono">${b.isbn13}</td><td><input type="number" id="eCop" value="${b.copies}" min="1" max="20" style="width:64px"></td><td>${b.out}</td><td style="white-space:nowrap"><button data-save="${b.isbn13}">Save</button> <button class="ghost" data-cancel="1">Cancel</button><br><label class="small"><input type="checkbox" id="eWd" ${b.withdrawn ? 'checked' : ''}> removed from this class</label></td></tr>`
+    : `<tr style="${b.withdrawn ? 'opacity:.45' : ''}">${cell(b)}<td>${esc(b.title || '(no title)')}</td><td>${esc(b.authors)}</td><td class="mono">${b.isbn13}</td><td>${b.copies}</td><td>${b.out}</td><td style="white-space:nowrap"><button class="ghost" data-edit="${b.isbn13}">Edit</button> <label class="small" style="cursor:pointer">📷<input type="file" accept="image/*" capture="environment" data-photo="${b.isbn13}" style="display:none"></label></td></tr>`;
+  $('bookList').innerHTML = rows.length ? `<p class="small">Edits to a title or author change the shared catalogue, so other classes holding the same book see them too. Copies apply to this class only.</p><table><thead><tr><th></th><th>Title</th><th>Author</th><th>ISBN</th><th>Copies</th><th>Out</th><th></th></tr></thead><tbody>${rows.map(line).join('')}</tbody></table>` : '<p class="small">No books yet.</p>';
+}
+$('bookList').onclick = async (e) => {
+  const d = e.target.dataset || {};
+  if (d.edit) { editing = d.edit; renderBooks(); }
+  if (d.cancel) { editing = null; renderBooks(); }
+  if (d.save) {
+    try {
+      await post(`/books/${d.save}`, { class_id: cid, title: $('eTitle').value, authors: $('eAuth').value, copies: $('eCop').value, withdrawn: $('eWd').checked });
+      toast('Saved'); loadBooks();
+    } catch (err) { toast(err.message); }
+  }
+};
+document.addEventListener('change', async (e) => {
+  const isbn = e.target.dataset?.photo; if (!isbn || !e.target.files[0]) return;
+  try {
+    const blob = await resizeImage(e.target.files[0], 600);
+    await api(`/books/${isbn}/cover`, { method: 'POST', body: blob, headers: { 'content-type': 'image/jpeg' } });
+    toast('Cover saved'); loadBooks();
+  } catch (err) { toast(err.message); }
+});
+function resizeImage(file, max) {
+  return new Promise((res, rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => { const s = Math.min(1, max / Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob((b) => b ? res(b) : rej(new Error('Could not read image')), 'image/jpeg', 0.8); };
+    img.onerror = () => rej(new Error('Could not read image')); img.src = url;
+  });
+}
+async function addOne(isbn, copies = 1) {
+  const r = await post(`/classes/${cid}/books`, { isbn13: isbn, copies, add: true });
+  const line = `<div>${r.title ? '✓' : '⚠'} <b>${esc(r.title || 'No details found — add title by hand')}</b> <span class="mono">${r.isbn13}</span>${r.existed ? ' <span class="small">(already had it — copies +' + copies + ')</span>' : ''}${!r.cover_key ? ' <span class="warnc">no cover</span>' : ''}</div>`;
+  $('addLog').insertAdjacentHTML('afterbegin', line);
+  return r;
+}
+$('addIsbn').onclick = async () => {
+  if (!needClass()) return;
+  try { await addOne($('isbnIn').value, Math.max(1, +$('copiesIn').value || 1)); $('isbnIn').value = ''; loadBooks(); } catch (e) { toast(e.message); }
+};
+$('isbnIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('addIsbn').click(); });
+
+// scan-to-add
+let stream = null, scanOn = false, lastIsbn = null, hits = 0, cooldown = 0;
+const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently: true });
+$('scanToggle').onclick = () => scanOn ? stopScan() : startScan();
+async function startScan() {
+  if (!needClass()) return;
+  try {
+    ZXingWASM.setZXingModuleOverrides({ locateFile: (p, prefix) => (p.endsWith('.wasm') ? '/vendor/zxing_reader.wasm' : prefix + p) });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    const v = $('adminVideo'); v.srcObject = stream; await v.play();
+    $('scanArea').style.display = 'block'; $('scanToggle').textContent = '⏹ Stop scanning'; scanOn = true; scanLoop();
+  } catch { toast('Camera not available'); }
+}
+function stopScan() {
+  scanOn = false; stream?.getTracks().forEach((t) => t.stop()); stream = null;
+  $('scanArea').style.display = 'none'; $('scanToggle').textContent = '📷 Scan to add';
+}
+function validIsbn13(s) { if (!/^97[89]\d{10}$/.test(s)) return false; let t = 0; for (let i = 0; i < 12; i++) t += +s[i] * (i % 2 ? 3 : 1); return (10 - t % 10) % 10 === +s[12]; }
+async function scanLoop() {
+  if (!scanOn) return;
+  const v = $('adminVideo');
+  try {
+    if (v.readyState >= 2 && Date.now() > cooldown) {
+      const w = v.videoWidth, h = v.videoHeight, sx = w * .1 | 0, sw = w * .8 | 0, sy = h * .25 | 0, sh = h * .5 | 0;
+      cv.width = sw; cv.height = sh; cx.drawImage(v, sx, sy, sw, sh, 0, 0, sw, sh);
+      const found = await ZXingWASM.readBarcodes(cx.getImageData(0, 0, sw, sh), { formats: ['EAN-13'], maxNumberOfSymbols: 1, tryHarder: true });
+      const hit = found.find((f) => f.isValid && validIsbn13(f.text));
+      if (hit) {
+        if (hit.text === lastIsbn) hits++; else { lastIsbn = hit.text; hits = 1; }
+        if (hits >= 2) { hits = 0; cooldown = Date.now() + 2500; navigator.vibrate?.(60); try { await addOne(hit.text, 1); loadBooks(); } catch (e) { toast(e.message); } lastIsbn = null; }
+      }
+    }
+  } catch {}
+  setTimeout(scanLoop, 100);
+}
+
+// ---------- import ----------
+let importRows = [];
+$('tmpl').onclick = (e) => {
+  e.preventDefault();
+  const ws = XLSX.utils.aoa_to_sheet([['isbn', 'title', 'authors', 'copies'], ['9780141036144', '', '', 1]]);
+  for (let r = 1; r <= 500; r++) { const ref = XLSX.utils.encode_cell({ r, c: 0 }); ws[ref] = ws[ref] || { t: 's', v: '' }; ws[ref].t = 's'; ws[ref].z = '@'; }
+  ws['!ref'] = 'A1:D501'; ws['!cols'] = [{ wch: 16 }, { wch: 36 }, { wch: 26 }, { wch: 8 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Books'); XLSX.writeFile(wb, 'class-library-template.xlsx');
+};
+function cellToIsbnText(v) {
+  if (v === null || v === undefined || v === '') return '';
+  if (typeof v === 'number') { let s = Number.isInteger(v) ? v.toFixed(0) : String(v); if (s.length === 9) s = '0' + s; return s; }
+  return String(v).trim();
+}
+function normIsbn(v) {
+  const s = String(v).replace(/[^0-9Xx]/g, '').toUpperCase();
+  if (s.length === 13 && validIsbn13(s)) return s;
+  if (s.length === 10 && /^\d{9}[\dX]$/.test(s)) { let t = 0; for (let i = 0; i < 10; i++) t += (s[i] === 'X' ? 10 : +s[i]) * (10 - i); if (t % 11 === 0) { const core = '978' + s.slice(0, 9); let sum = 0; for (let i = 0; i < 12; i++) sum += +core[i] * (i % 2 ? 3 : 1); return core + ((10 - sum % 10) % 10); } }
+  return null;
+}
+$('xlsxIn').onchange = async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: false });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' }).filter((r) => r.some((c) => c !== ''));
+  if (!aoa.length) { $('importPreview').innerHTML = '<p class="err">The sheet is empty.</p>'; return; }
+  const head = aoa[0].map((h) => String(h).trim().toLowerCase());
+  const hasHeader = head.some((h) => /isbn/.test(h));
+  const col = (re, fb) => { const i = head.findIndex((h) => re.test(h)); return i >= 0 ? i : fb; };
+  const iI = hasHeader ? col(/isbn/, 0) : 0, iT = hasHeader ? col(/^title|name/, -1) : -1, iA = hasHeader ? col(/author/, -1) : -1, iC = hasHeader ? col(/cop|qty|quant/, -1) : -1, iP = hasHeader ? col(/publisher/, -1) : -1, iY = hasHeader ? col(/year/, -1) : -1;
+  const body = hasHeader ? aoa.slice(1) : aoa;
+  importRows = []; const bad = []; const seen = new Set();
+  body.forEach((r, n) => {
+    const raw = cellToIsbnText(r[iI]); const isbn = normIsbn(raw); const line = n + (hasHeader ? 2 : 1);
+    if (!raw) return;
+    if (/e\+/i.test(raw)) return bad.push({ line, raw, why: 'Excel turned this into scientific notation — format the column as Text and re-enter' });
+    if (!isbn) return bad.push({ line, raw, why: 'Not a valid ISBN (check digit fails)' });
+    if (seen.has(isbn)) return bad.push({ line, raw, why: 'Duplicate of an earlier row' });
+    seen.add(isbn);
+    importRows.push({ isbn, title: iT >= 0 ? String(r[iT]).trim() : '', authors: iA >= 0 ? String(r[iA]).trim() : '', copies: iC >= 0 ? r[iC] : 1, publisher: iP >= 0 ? String(r[iP]).trim() : '', year: iY >= 0 ? r[iY] : '' });
+  });
+  $('importPreview').innerHTML = `<p><b class="ok">${importRows.length}</b> valid rows ready.` + (bad.length ? ` <b class="err">${bad.length}</b> need fixing:` : '') + `</p>` + (bad.length ? table([['line', 'Row'], ['raw', 'Value'], ['why', 'Problem']], bad) : '');
+  $('importGo').disabled = !importRows.length; $('importResult').innerHTML = '';
+};
+$('importGo').onclick = async () => {
+  if (!needClass()) return;
+  $('importGo').disabled = true; const prog = $('importProg'); prog.style.display = 'block'; prog.max = importRows.length; prog.value = 0;
+  const results = [];
+  for (let i = 0; i < importRows.length; i += 10) {
+    const chunk = importRows.slice(i, i + 10);
+    try { const r = await post(`/classes/${cid}/import`, { rows: chunk }); results.push(...r.results); }
+    catch (e) { chunk.forEach((c) => results.push({ isbn: c.isbn, status: 'error', message: e.message })); }
+    prog.value = Math.min(importRows.length, i + 10);
+  }
+  const count = (s) => results.filter((r) => r.status === s).length;
+  const attention = results.filter((r) => r.status !== 'ok');
+  $('importResult').innerHTML = `<p><b class="ok">${count('ok')}</b> complete · <b class="warnc">${count('no_cover')}</b> without cover · <b class="err">${count('no_match') + count('error') + count('invalid_isbn')}</b> need attention</p>` + (attention.length ? table([['isbn', 'ISBN'], ['status', 'Status'], ['title', 'Title']], attention) + '<p class="small">Add missing titles or photos from the catalogue list below.</p>' : '');
+  prog.style.display = 'none'; loadBooks();
+};
+
+// ---------- pupils ----------
+async function loadPupils() {
+  const rows = await api(`/classes/${cid}/pupils`);
+  $('pupilList').innerHTML = rows.length ? `<table><thead><tr><th>Shown as</th><th>Emoji</th><th>Full name (teacher only)</th><th></th></tr></thead><tbody>${rows.map((p) => `<tr style="${p.active ? '' : 'opacity:.45'}"><td>${esc(p.first_name)} ${esc(p.last_initial)}.</td><td style="font-size:22px">${p.emoji}</td><td>${esc(p.full_surname ? p.first_name + ' ' + p.full_surname : '—')}</td><td><button class="ghost" data-active="${p.id}" data-to="${p.active ? 0 : 1}">${p.active ? 'Remove' : 'Restore'}</button></td></tr>`).join('')}</tbody></table>` : '<p class="small">No pupils yet.</p>';
+}
+$('addPupils').onclick = async () => {
+  if (!needClass()) return;
+  const pupils = $('pupilText').value.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => { const parts = l.split(/\s+/); return { first_name: parts[0], last_name: parts.slice(1).join(' ') }; });
+  if (!pupils.length) return;
+  try {
+    const r = await post(`/classes/${cid}/pupils`, { pupils, store_surname: $('storeSurname').checked });
+    $('pupilMsg').innerHTML = `Added ${r.added.length}.` + (r.skipped.length ? ` <span class="err">Skipped ${r.skipped.length}: ${r.skipped.map((s) => esc((s.first_name || '') + ' ' + (s.last_initial || '') + ' — ' + s.reason)).join('; ')}</span>` : '');
+    if (!r.skipped.length) $('pupilText').value = ''; loadPupils();
+  } catch (e) { toast(e.message); }
+};
+document.addEventListener('click', async (e) => {
+  const id = e.target.dataset?.active; if (!id) return;
+  try { await post(`/pupils/${id}`, { active: +e.target.dataset.to === 1 }); loadPupils(); } catch (err) { toast(err.message); }
+});
+$('archiveBtn').onclick = async () => {
+  if (!needClass()) return;
+  const name = classes.find((c) => c.id === cid)?.name;
+  if (prompt(`This permanently deletes all pupils, loans and responses for ${name}.\nType the class name to confirm.`) !== name) return;
+  await post(`/classes/${cid}/archive`); toast('Class archived'); await loadClasses(); refresh();
+};
+
+// ---------- reports ----------
+const REPORTS = [['overdue', 'Overdue'], ['on-loan', 'On loan'], ['lost', 'Lost'], ['popular', 'Popular'], ['never-borrowed', 'Never borrowed'], ['pupils', 'Per pupil'], ['history', 'Loan history']];
+$('reportBtns').innerHTML = REPORTS.map((r) => `<button class="ghost" data-rep="${r[0]}">${r[1]}</button>`).join('');
+$('reportBtns').onclick = async (e) => {
+  const name = e.target.dataset?.rep; if (!name || !needClass()) return;
+  curReport = name; const rows = await api(`/classes/${cid}/reports/${name}`);
+  $('reportOut').innerHTML = rows.length ? `<table><thead><tr>${Object.keys(rows[0]).map((k) => `<th>${esc(k.replace(/_/g, ' '))}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${Object.values(r).map((v) => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p class="small">Nothing to show.</p>';
+  $('csvBtn').disabled = $('printBtn').disabled = !rows.length;
+};
+$('csvBtn').onclick = async () => {
+  const r = await fetch(`/api/admin/classes/${cid}/reports/${curReport}?format=csv`, { headers: { 'x-admin-key': key } });
+  const b = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = curReport + '.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+$('printBtn').onclick = () => { const w = window.open('', '_blank'); w.document.write(`<title>${curReport}</title><style>body{font:14px system-ui}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 6px;text-align:left}</style><h2>${esc(classes.find((c) => c.id === cid)?.name)} — ${esc(curReport)}</h2>` + $('reportOut').innerHTML); w.document.close(); w.print(); };
+$('auditBtn').onclick = async () => { if (!needClass()) return; const rows = await api(`/classes/${cid}/audit`); $('auditOut').innerHTML = table([['at', 'When'], ['actor', 'Who'], ['action', 'Action'], ['detail', 'Detail']], rows.map((r) => ({ ...r, at: r.at.slice(0, 16).replace('T', ' ') }))); };
+
+// ---------- setup ----------
+function loadSetup() {
+  const c = classes.find((x) => x.id === cid); if (!c) return;
+  $('kioskLink').textContent = `${location.origin}/?t=${c.kiosk_token}`;
+}
+$('copyLink').onclick = () => navigator.clipboard.writeText($('kioskLink').textContent).then(() => toast('Link copied'));
+$('rotate').onclick = async () => {
+  if (!confirm('The current tablet will stop working until you open the new link on it. Continue?')) return;
+  const r = await post(`/classes/${cid}/rotate-token`); await loadClasses(); loadSetup(); toast('New link created');
+};
+const setPin = (kind, el) => async () => { try { await post(`/classes/${cid}/pin`, { kind, pin: $(el).value }); $(el).value = ''; toast('PIN saved'); } catch (e) { toast(e.message); } };
+$('setLib').onclick = setPin('librarian', 'libPin'); $('setOv').onclick = setPin('override', 'ovPin');
+
+// ---------- boot ----------
+(async () => {
+  me = await loadMe();
+  if (me) start(); else signOut();
+})();
+})();
+</script>
+</body>
+</html>
